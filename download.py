@@ -1,28 +1,48 @@
+from importlib.metadata import metadata
 from pytube import YouTube
-from sys import argv
 import ffmpeg
-
+import os
+ 
 ## path to download video to
 download_path = 'C:/Users/Kendy Nguyen/Videos/YouTube Videos'
-link = argv[1]
-yt = YouTube(link)
 
-## downloads video at 360p 
-def download_progressive_video():
-    print("Title:", yt.title)
-    print("View:", yt.views)
+## audio only
+def download_audio():
+    print("TO DO")
+
+## download at SD quality (progressive stream)
+def download_low(yt):
     yd = yt.streams.get_highest_resolution()
     yd.download(download_path)
 
-
 ## Adaptive splits audio & video for higher quality
 ## progressive combines the two but limits it to low quality
-## will need to do logic for quality to be 360, 720, 1080 or 4000 then throw error.
-def download_video(quality = "1080p"):
+def download_video(yt, quality = "1080p"):
     vid = yt.streams.filter(adaptive=True, res=quality).first()
     aud = yt.streams.filter(only_audio=True).first()
 
-    vid.download(download_path)
-    aud.download(download_path, filename = "audio.mp4")
+    a = vid.download(filename = 'temo_video.mp4');
+    b = aud.download(filename = 'temp_audio.mp4')
+
+    video_stream = ffmpeg.input(a)
+    audio_stream = ffmpeg.input(b)
     
+    ffmpeg.output(audio_stream, video_stream, 'C:/Users/Kendy Nguyen/Videos/YouTube Videos/out.mp4').run()
+
+    ## need to find any characters that will break and apply following logic. Move this into separate function
+    vid.tit = yt.title
+    if "|" in yt.title:
+        vid.tit = yt.title.replace("|", "")
+        print("Title: ", vid.tit)
+    
+    elif "\\" in yt.title:
+        vid.tit = yt.title.replace("\\", "")
+        print("Title: ", vid.tit)
+
+    elif "/" in yt.title:
+        vid.tit = yt.title.replace("/", "")
+        print("Title: ", vid.tit)
+
+    os.rename('C:/Users/Kendy Nguyen/Videos/YouTube Videos/out.mp4', 'C:/Users/Kendy Nguyen/Videos/YouTube Videos/' + vid.tit +'.mp4') 
+    print("Re-named")
 
